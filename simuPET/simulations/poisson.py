@@ -28,12 +28,16 @@ def simulate_poisson_nohomo(func, domain, max_lam):
     dim = domain.shape[0]
 
     # Generate homogeneous Poisson process with rate corresponding to the upper bound
-    num_points = int(np.random.poisson(lam=max_lam*area)) #int because cupy returns array
-    point_coords = np.random.uniform(low=domain[:, 0], high=domain[:, 1], size=(num_points, dim))
+    num_points = int(
+        np.random.poisson(lam=max_lam * area)
+    )  # int because cupy returns array
+    point_coords = np.random.uniform(
+        low=domain[:, 0], high=domain[:, 1], size=(num_points, dim)
+    )
 
     # Thin the homogeneous Poisson process to obtain the non-homogeneous one  sing the acceptance ratio func(x)/max_lam
     # Pass n-dimensional locations to func() as n vectors of the same size
-    thin_prob = func(*point_coords.T)/max_lam
+    thin_prob = func(*point_coords.T) / max_lam
     # Evaluate the rejection event (biased coin flips)
     points_to_keep = thin_prob > np.random.uniform(0, 1, num_points)
     # Thin the observations
@@ -49,16 +53,30 @@ def simulate_poisson_nohomo(func, domain, max_lam):
 def poisson_pf(ks, mu):
     # Compute Poisson probabilities for consecutive array of ks
     # Surely faster with gamma function / Stirling / tabulation
-    logs = np.log(mu)*ks-mu-np.cumsum(np.log(ks))-np.sum(np.log(np.arange(1, np.min(ks))))
+    logs = (
+        np.log(mu) * ks
+        - mu
+        - np.cumsum(np.log(ks))
+        - np.sum(np.log(np.arange(1, np.min(ks))))
+    )
     # lucky behavior for min as sum of empty list is zero
     return np.exp(logs)
 
 
-def mean_var_test(func, domain, max_l, num_sim=10000, plot_converg=False, plot_distro=False, plot_positions=False):
+def mean_var_test(
+    func,
+    domain,
+    max_l,
+    num_sim=10000,
+    plot_converg=False,
+    plot_distro=False,
+    plot_positions=False,
+):
 
     # Check expectation and variance of the number of simulated points in the domain
     # should be the same as the integral of the rate/intensity function
     from scipy.integrate import nquad
+
     int_lam, _ = nquad(func, domain)
 
     # num_sim_points = 0
@@ -73,24 +91,30 @@ def mean_var_test(func, domain, max_l, num_sim=10000, plot_converg=False, plot_d
             points_coords += [sim_points]  # to assess positions of simulated points
 
         # Plot every power of 10 to check how mean and var converge to the integral
-        if plot_converg and sim > 0 and np.log10(sim+1) % 1 == 0.:
+        if plot_converg and sim > 0 and np.log10(sim + 1) % 1 == 0.0:
             plt.scatter(sim, np.mean(num_sim_points[:sim]), c="b")
             plt.scatter(sim, np.var(num_sim_points[:sim]), c="r")
 
     if plot_converg:
-        print("Plot: mean number of simulations (blue) and the variance (red)" +
-              "converging to the integral (line) as more points are simulated.")
+        print(
+            "Plot: mean number of simulations (blue) and the variance (red)"
+            + "converging to the integral (line) as more points are simulated."
+        )
         plt.axhline(int_lam, 0, num_sim, c="k")
         plt.semilogx()
         plt.show()
 
     if plot_distro:
-        print("Plot: histogram of the distribution of the number of simulated points" +
-              "compared with a Poisson distribution with parameter the integral of the rate/intensity.")
+        print(
+            "Plot: histogram of the distribution of the number of simulated points"
+            + "compared with a Poisson distribution with parameter the integral of the rate/intensity."
+        )
         num_range = [np.min(num_sim_points), np.max(num_sim_points)]
-        a_num_arange = np.arange(num_range[0], num_range[1]+1)
+        a_num_arange = np.arange(num_range[0], num_range[1] + 1)
         num_arange = a_num_arange[:-1]
-        sim_pdf, _ = np.histogram(num_sim_points, bins=a_num_arange-.5, density=True)  # center the bins
+        sim_pdf, _ = np.histogram(
+            num_sim_points, bins=a_num_arange - 0.5, density=True
+        )  # center the bins
 
         plt.plot(num_arange, sim_pdf, "b-", label="simulated")
         plt.plot(num_arange, poisson_pf(num_arange, int_lam), "r-", label="theoretical")
@@ -98,8 +122,10 @@ def mean_var_test(func, domain, max_l, num_sim=10000, plot_converg=False, plot_d
         plt.show()
 
     if plot_positions:
-        print("Plot: projected histogram of point locations x,y... distribution should match shape" +
-              " of rate/intensity function")
+        print(
+            "Plot: projected histogram of point locations x,y... distribution should match shape"
+            + " of rate/intensity function"
+        )
         # Projection of a Poisson process is a Poisson process, project nD into 1D and compare with the projection of
         # the rate/intensity function
         dim = len(domain)
@@ -109,21 +135,27 @@ def mean_var_test(func, domain, max_l, num_sim=10000, plot_converg=False, plot_d
         if dim == 1:
             xproj_points_coords = points_coords
         else:
-            xproj_points_coords = points_coords[..., 0]  # works with 1D if no if in simulate_poisson_nohomo
+            xproj_points_coords = points_coords[
+                ..., 0
+            ]  # works with 1D if no if in simulate_poisson_nohomo
 
-        norm_xproj_sim_lam, bin_edges = np.histogram(xproj_points_coords, bins=50, density=True)
+        norm_xproj_sim_lam, bin_edges = np.histogram(
+            xproj_points_coords, bins=50, density=True
+        )
         # xproj_sim_lam = np.mean(num_sim_points)*norm_xproj_sim_lam
-        bin_centers = (bin_edges[1:] + bin_edges[0:bin_edges.size - 1]) / 2
+        bin_centers = (bin_edges[1:] + bin_edges[0 : bin_edges.size - 1]) / 2
 
         if dim == 1:
             xproj_theo_lam = func(bin_centers)
         else:
-            xproj_theo_lam = [nquad(lambda *args: func(x, *args), domain[1:])[0] for x in bin_centers]
+            xproj_theo_lam = [
+                nquad(lambda *args: func(x, *args), domain[1:])[0] for x in bin_centers
+            ]
             # integral over the projection
 
         # plt.scatter(bin_centers, xproj_sim_lam, c="b", label="simulated")
         plt.scatter(bin_centers, norm_xproj_sim_lam, c="b", label="simulated")
-        plt.plot(bin_centers, xproj_theo_lam/int_lam, c="r", label="theoretical")
+        plt.plot(bin_centers, xproj_theo_lam / int_lam, c="r", label="theoretical")
         plt.legend()
         plt.show()
 
@@ -137,7 +169,9 @@ def simulate_poisson_and_geometric(func, domain, max_lam, sensitivity, nLayers):
     dim = domain.shape[0]
 
     # Generate homogeneous Poisson process with rate corresponding to the upper bound
-    num_points = int(np.random.poisson(lam=max_lam*area)) #int because cupy returns array
+    num_points = int(
+        np.random.poisson(lam=max_lam * area)
+    )  # int because cupy returns array
 
     # Geometric
     layers1 = np.random.geometric(sensitivity, size=num_points)
@@ -148,11 +182,13 @@ def simulate_poisson_and_geometric(func, domain, max_lam, sensitivity, nLayers):
     num_points = len(layers1)
 
     # Back to Poisson
-    point_coords = np.random.uniform(low=domain[:, 0], high=domain[:, 1], size=(num_points, dim))
+    point_coords = np.random.uniform(
+        low=domain[:, 0], high=domain[:, 1], size=(num_points, dim)
+    )
 
     # Thin the homogeneous Poisson process to obtain the non-homogeneous one  sing the acceptance ratio func(x)/max_lam
     # Pass n-dimensional locations to func() as n vectors of the same size
-    thin_prob = func(*point_coords.T)/max_lam
+    thin_prob = func(*point_coords.T) / max_lam
     # Evaluate the rejection event (biased coin flips)
     points_to_keep = thin_prob > np.random.uniform(0, 1, num_points)
     # Thin the observations

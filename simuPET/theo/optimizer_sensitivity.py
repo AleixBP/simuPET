@@ -259,20 +259,20 @@ np.cuda.Device(3).use()
 radioactivity=1e7
 boxes, img, detections, phi, s = simulator.simulate_muPET(radioactivity=radioactivity, plot=False, 
                                                             image_path=((840,840),200,None,None))
-%timeit simulator.simulate_muPET(radioactivity=radioactivity, plot=False, image_path=((840,840),200,None,None))
+#%timeit simulator.simulate_muPET(radioactivity=radioactivity, plot=False, image_path=((840,840),200,None,None))
 
 
 from muPET.simulations.scanner_sensitivity
 
 thetas = np.linspace(0,np.pi,100)
-    lim = boxes.Rx/np.sqrt(2)
-    #lim += Rx/2 #some extra
-    si = np.linspace(-lim,lim,100)
-    tt, ss = np.meshgrid(thetas, si)
+lim = boxes.Rx/np.sqrt(2)
+#lim += Rx/2 #some extra
+si = np.linspace(-lim,lim,100)
+tt, ss = np.meshgrid(thetas, si)
 
-    # All lines with the same s
-    plot_allt_in_scanner(boxes, 5, t=np.pi/2, n=15)
+# All lines with the same s
+plot_allt_in_scanner(boxes, 5, t=np.pi/2, n=15)
 
-    # All lines with the same theta
-    plot_alls_in_scanner(boxes, np.pi/4, s=boxes.Rx, n=15)
+# All lines with the same theta
+plot_alls_in_scanner(boxes, np.pi/4, s=boxes.Rx, n=15)
     

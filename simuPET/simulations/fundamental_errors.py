@@ -1,5 +1,7 @@
 from simuPET import array_lib as np
+
 # changed: fwhm of aco angle error, fwhm of range into mm (taking out e-3), added exponential range distro
+
 
 def total_disintegrations(activity, time):
     """
@@ -17,6 +19,7 @@ def total_disintegrations(activity, time):
     """
 
     return activity * time
+
 
 def total_disintegrations_2(tracer, mass, time):
     """
@@ -51,7 +54,7 @@ def total_disintegrations_2(tracer, mass, time):
     else:
         print("Error: tracer must be 18F, 11C, 13N, or 15O.")
 
-    rad_const = 1*NA*np.ln(2) / (M * t_half)
+    rad_const = 1 * NA * np.ln(2) / (M * t_half)
 
     return rad_const * time * mass
 
@@ -92,9 +95,12 @@ def f_decay(x, tracer="18F"):
     else:
         print("Error: tracer must be 18F, 11C, 13N, or 15O.")
 
-    f = (C*np.exp(-k1*np.abs(x)) + (1-C)*np.exp(-k2*np.abs(x)))/(2*C/k1 + 2*(1-C)/k2)
+    f = (C * np.exp(-k1 * np.abs(x)) + (1 - C) * np.exp(-k2 * np.abs(x))) / (
+        2 * C / k1 + 2 * (1 - C) / k2
+    )
 
     return f
+
 
 def F_decay(x, tracer="18F"):
     """
@@ -131,7 +137,9 @@ def F_decay(x, tracer="18F"):
     else:
         print("Error: tracer must be 18F, 11C, 13N, or 15O.")
 
-    F = (C*k2*(1-np.exp(-k1*x)) + (1-C)*k1*(1-np.exp(-k2*x)))/(2*(C*k2 - C*k1 + k1))
+    F = (C * k2 * (1 - np.exp(-k1 * x)) + (1 - C) * k1 * (1 - np.exp(-k2 * x))) / (
+        2 * (C * k2 - C * k1 + k1)
+    )
 
     return F
 
@@ -162,6 +170,7 @@ def distance_decay(tracer="18F", size=None):
 
     return distance
 
+
 def distance_decay_gauss(tracer="18F", size=None):
     """
     This function randomly samples from a Gaussian pdf that approximates the positron decay distribution to
@@ -180,17 +189,18 @@ def distance_decay_gauss(tracer="18F", size=None):
     """
 
     if tracer == "18F":
-        fwhm = 0.102 #e-3 #0.54e-3
+        fwhm = 0.102  # e-3 #0.54e-3
     elif tracer == "68Ga":
-        fwhm = 2.83 #e-3
+        fwhm = 2.83  # e-3
     elif tracer == "15O":
-        fwhm = 2.48 #e-3
+        fwhm = 2.48  # e-3
     mean_freepath = 0
-    sigma_freepath = fwhm / (2*np.sqrt(2)*np.sqrt(np.log(2)))
+    sigma_freepath = fwhm / (2 * np.sqrt(2) * np.sqrt(np.log(2)))
 
     distance = np.random.normal(mean_freepath, sigma_freepath, size=size)
 
     return distance
+
 
 # 4. Photon emission: simulation of acolinearity
 def f_acolinearity(x):
@@ -207,11 +217,13 @@ def f_acolinearity(x):
     scalar or `x.shape` array of f_angle(x) values.
     """
 
-    B = (346.5*((0.124*x)**2 + 1)**2 + 5330*((0.124*x)**2 + 1)- 4264)/((0.124*x)**2 + 1)**5
+    B = (346.5 * ((0.124 * x) ** 2 + 1) ** 2 + 5330 * ((0.124 * x) ** 2 + 1) - 4264) / (
+        (0.124 * x) ** 2 + 1
+    ) ** 5
     M = 0
     b = 1
     m = 0
-    return (b*B + m*M)
+    return b * B + m * M
 
 
 def angle_deviation(size=None):
@@ -235,7 +247,8 @@ def angle_deviation(size=None):
 
     angle = angle.reshape(size)
 
-    return angle/1e3
+    return angle / 1e3
+
 
 def angle_deviation_gauss(size=None):
     """
@@ -250,8 +263,10 @@ def angle_deviation_gauss(size=None):
     -------
     array or scalar of size `size` with random samples drawn from a Gaussian approximating f_acolinearity
     """
-    #sigma_acol = np.deg2rad(0.25) / (2*np.sqrt(2)*np.sqrt(np.log(2))) #fwhm to sigma
-    sigma_acol = np.deg2rad(0.47) / (2*np.sqrt(2)*np.sqrt(np.log(2))) #fwhm to sigma
+    # sigma_acol = np.deg2rad(0.25) / (2*np.sqrt(2)*np.sqrt(np.log(2))) #fwhm to sigma
+    sigma_acol = np.deg2rad(0.47) / (
+        2 * np.sqrt(2) * np.sqrt(np.log(2))
+    )  # fwhm to sigma
     mean_acol = 0
     angle = np.random.normal(0, sigma_acol, size=size)
 
@@ -259,59 +274,62 @@ def angle_deviation_gauss(size=None):
 
 
 def rejection_sampling(pdf, max_pdf, *args):
-    
+
     accepted = False
     y = 0
-    
-    while(not accepted):
+
+    while not accepted:
         x = np.random.normal(loc=0, scale=1)
         u = np.random.uniform(low=0.0, high=1.0)
 
-        if u  <= pdf(x, *args) / max_pdf:
+        if u <= pdf(x, *args) / max_pdf:
             y = x
             accepted = True
-        
+
         return y
-    
+
 
 def distance_decay_gauss_alternative(tracer="18F", size=None):
-    
+
     if False:
+
         def gauss_func(x, mu=0, sigma=1):
-            return np.exp(-((x-mu)**2)/(2*sigma**2))/(sigma*np.sqrt(2*np.pi))
-        
+            return np.exp(-((x - mu) ** 2) / (2 * sigma**2)) / (
+                sigma * np.sqrt(2 * np.pi)
+            )
+
         max_fdecay = f_decay(0, tracer)
-        
-        stdev = 0.102/(2*np.sqrt(2)*np.sqrt(np.log(2)))
-        point_coords = np.random.normal(loc=0, scale=stdev, size=2*size)
-        
-        
-        m_ct = max_fdecay # missing an upper bound of fdecay/gauss, is there any?
-        thin_prob = f_decay(point_coords)/(m_ct*gauss_func(point_coords, sigma=stdev))
-        
+
+        stdev = 0.102 / (2 * np.sqrt(2) * np.sqrt(np.log(2)))
+        point_coords = np.random.normal(loc=0, scale=stdev, size=2 * size)
+
+        m_ct = max_fdecay  # missing an upper bound of fdecay/gauss, is there any?
+        thin_prob = f_decay(point_coords) / (
+            m_ct * gauss_func(point_coords, sigma=stdev)
+        )
+
         points_to_keep = thin_prob > np.random.uniform(0, 1, size)
-        
+
         point_coords = point_coords[points_to_keep]
-        
+
         return point_coords
-    
+
     elif False:
 
         fwhm = 0.102
-        #2*np.ln(2)*b = fwhm
-        return np.random.laplace(loc=0, scale=fwhm/float(2*np.log(2)), size=size)
-    
+        # 2*np.ln(2)*b = fwhm
+        return np.random.laplace(loc=0, scale=fwhm / float(2 * np.log(2)), size=size)
+
     elif True:
         k1 = 23.5554
         k2 = 3.7588
         c = 0.5875
-        
-        l1 = np.random.laplace(loc=0, scale=1/k1, size=size)
-        l2 = np.random.laplace(loc=0, scale=1/k2, size=size)
-        
-        coin = c/(c+(1-c)*k1/k2)
-        
-        decide = np.random.uniform(0, 1, size)<coin
-        
-        return l1*decide + l2*(decide-1)
-    
+
+        l1 = np.random.laplace(loc=0, scale=1 / k1, size=size)
+        l2 = np.random.laplace(loc=0, scale=1 / k2, size=size)
+
+        coin = c / (c + (1 - c) * k1 / k2)
+
+        decide = np.random.uniform(0, 1, size) < coin
+
+        return l1 * decide + l2 * (decide - 1)
