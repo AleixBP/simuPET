@@ -209,7 +209,7 @@ def compare_with_simulation(boxes, phi, s):
 
 
 if __name__ == '__main__':
-    from muPET.simulations.simulator import simulate_muPET
+    from simuPET.simulations.simulator import simulate_muPET
     boxes, *_, phi, s = simulate_muPET()
 
     thetas = np.linspace(0,np.pi,100)

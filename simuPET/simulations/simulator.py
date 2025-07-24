@@ -422,7 +422,7 @@ def simulate_muPET(image_path=None, radioactivity=1e6, sim_domain=None, plot=Fal
 def iterate_simulate_muPET(nsim=1, weights=True, **kwargs):
     #dask, but not sending arrays here, would have to put it in simulate poisson and geometric
     arg_len = 3
-    if weights: arg_len+=1; from muPET.simulations.scanner_sensitivity import xray_scanner
+    if weights: arg_len+=1; from simuPET.simulations.scanner_sensitivity import xray_scanner
         
     sims = [[] for _ in range(arg_len)]; axes = [1] + (arg_len-1)*[0]
 

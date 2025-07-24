@@ -50,22 +50,13 @@ def bpf_2D(boxes, detections, Ns, factor=2, weights=None):
 image_path = "/home/boquet/simuPET/simuPET/input_data/brain_phantom_z250.npy"
 
 if True:
-    diag = np.sqrt(2)
     nsim = 8
     radioactivity = .7*1e7
-    number_of_s_samples = int(340*diag)
-    number_of_phi_samples = int(number_of_s_samples*np.pi/2)
-    bins = 350
-    account_for_weights = False
-    
-    lam = 520
-    niter = 120
-    n_prox_iter = 100
 
 
 ## SIMULATE
 from simuPET.simulations import simulator
-boxes, img, detections, phi, s, data_weights = simulator.iterate_simulate_simuPET(nsim=nsim, weights=True, radioactivity=radioactivity, image_path=image_path)
+boxes, img, detections, phi, s, data_weights = simulator.iterate_simulate_muPET(nsim=nsim, weights=True, radioactivity=radioactivity, image_path=image_path)
 sino_data = np.stack((phi,s), axis=1)
 pl = plt.hist2d(*sino_data.T, bins=100)
 
@@ -76,10 +67,10 @@ data_weights = xray_scanner(boxes, *sino_data.T); plt.show()
 
 ## RUN
 #fbp = bpf_2D(boxes, detections, img.shape[0], factor=2, weights=None)
-fbp = bpf_2D(boxes, detections, img.shape[0], factor=2, weights=1./np.maximum(data_weights,np.percentile(data_weights,20)))
-plt.imshow(fbp[10:-10,10:-10])
-plt.imshow(img.T[:,::-1][10:-10,10:-10])
-plt.imshow(img.T[:,::-1][10:-10,10:-10]-fbp[10:-10,10:-10]*np.max(img.T[:,::-1][10:-10,10:-10])/np.max(fbp[10:-10,10:-10]))
+fbp = bpf_2D(boxes, detections, img.shape[0], factor=2, weights=1./np.maximum(data_weights,np.percentile(data_weights,10)))
+plt.imshow(fbp[10:-10,10:-10]); plt.show()
+plt.imshow(img.T[:,::-1][10:-10,10:-10]); plt.show()
+plt.imshow(img.T[:,::-1][10:-10,10:-10]-fbp[10:-10,10:-10]*np.max(img.T[:,::-1][10:-10,10:-10])/np.max(fbp[10:-10,10:-10])); plt.show()
 #np.save("detections.npy", detections)
 #np.save("data_weights.npy", data_weights)
 #np.save("img.npy", img)
